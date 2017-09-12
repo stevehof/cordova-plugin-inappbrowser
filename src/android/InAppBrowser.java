@@ -17,7 +17,7 @@
        under the License.
 */
 package org.apache.cordova.inappbrowser;
-
+import android.util.Log;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -84,7 +84,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String HIDDEN = "hidden";
     private static final String LOAD_START_EVENT = "loadstart";
     private static final String LOAD_STOP_EVENT = "loadstop";
-    private static final String OPEN_CAMERA_EVENT = "opencamera";
+    private static final String INDUSTRAFORM_EVENT = "industraformevent";
     private static final String LOAD_ERROR_EVENT = "loaderror";
     private static final String CLEAR_ALL_CACHE = "clearcache";
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
@@ -408,7 +408,7 @@ public class InAppBrowser extends CordovaPlugin {
             intent.putExtra(Browser.EXTRA_APPLICATION_ID, cordova.getActivity().getPackageName());
             this.cordova.getActivity().startActivity(intent);
             return "";
-        // not catching FileUriExposedException explicitly because buildtools<24 doesn't know about it
+            // not catching FileUriExposedException explicitly because buildtools<24 doesn't know about it
         } catch (java.lang.RuntimeException e) {
             LOG.d(LOG_TAG, "InAppBrowser: Error loading url "+url+":"+ e.toString());
             return e.toString();
@@ -570,7 +570,7 @@ public class InAppBrowser extends CordovaPlugin {
             }
             Boolean wideViewPort = features.get(USER_WIDE_VIEW_PORT);
             if (wideViewPort != null ) {
-		            useWideViewPort = wideViewPort.booleanValue();
+                useWideViewPort = wideViewPort.booleanValue();
             }
         }
 
@@ -585,8 +585,8 @@ public class InAppBrowser extends CordovaPlugin {
              */
             private int dpToPixels(int dipValue) {
                 int value = (int) TypedValue.applyDimension( TypedValue.COMPLEX_UNIT_DIP,
-                                                            (float) dipValue,
-                                                            cordova.getActivity().getResources().getDisplayMetrics()
+                        (float) dipValue,
+                        cordova.getActivity().getResources().getDisplayMetrics()
                 );
 
                 return value;
@@ -694,8 +694,8 @@ public class InAppBrowser extends CordovaPlugin {
                     public boolean onKey(View v, int keyCode, KeyEvent event) {
                         // If the event is a key-down event on the "enter" button
                         if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                          navigate(edittext.getText().toString());
-                          return true;
+                            navigate(edittext.getText().toString());
+                            return true;
                         }
                         return false;
                     }
@@ -817,11 +817,20 @@ public class InAppBrowser extends CordovaPlugin {
                 inAppWebView.addJavascriptInterface(new Object()
                 {
                     @JavascriptInterface
-                    public void performClick() throws Exception
+                    public void Emit(String event, String json_data) throws Exception
                     {
-                        Log.d("LOGIN::", "Clicked");
+                        try {
+                            JSONObject obj = new JSONObject();
+                            obj.put("type", INDUSTRAFORM_EVENT);
+                            obj.put("event_name", event);
+                            obj.put("event_data", json_data);
+                            sendUpdate(obj, true);
+                        } catch (JSONException ex) {
+                            LOG.d(LOG_TAG, "Should never happen");
+                        }
                     }
-                }, "login");
+                }, "cordovaEvents");
+
                 inAppWebView.setId(Integer.valueOf(6));
                 inAppWebView.getSettings().setLoadWithOverviewMode(true);
                 inAppWebView.getSettings().setUseWideViewPort(useWideViewPort);
@@ -1034,7 +1043,7 @@ public class InAppBrowser extends CordovaPlugin {
             // Update the UI if we haven't already
             if (!newloc.equals(edittext.getText().toString())) {
                 edittext.setText(newloc);
-             }
+            }
 
             try {
                 JSONObject obj = new JSONObject();
