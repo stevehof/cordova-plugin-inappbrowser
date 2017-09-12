@@ -69,6 +69,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import android.webkit.JavascriptInterface;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
@@ -83,6 +84,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String HIDDEN = "hidden";
     private static final String LOAD_START_EVENT = "loadstart";
     private static final String LOAD_STOP_EVENT = "loadstop";
+    private static final String OPEN_CAMERA_EVENT = "opencamera";
     private static final String LOAD_ERROR_EVENT = "loaderror";
     private static final String CLEAR_ALL_CACHE = "clearcache";
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
@@ -812,6 +814,14 @@ public class InAppBrowser extends CordovaPlugin {
                 }
 
                 inAppWebView.loadUrl(url);
+                inAppWebView.addJavascriptInterface(new Object()
+                {
+                    @JavascriptInterface
+                    public void performClick() throws Exception
+                    {
+                        Log.d("LOGIN::", "Clicked");
+                    }
+                }, "login");
                 inAppWebView.setId(Integer.valueOf(6));
                 inAppWebView.getSettings().setLoadWithOverviewMode(true);
                 inAppWebView.getSettings().setUseWideViewPort(useWideViewPort);

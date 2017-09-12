@@ -36,6 +36,7 @@
             'loadstart': channel.create('loadstart'),
             'loadstop' : channel.create('loadstop'),
             'loaderror' : channel.create('loaderror'),
+            'opencamera' : channel.create('opencamera'),
             'exit' : channel.create('exit')
        };
     }
