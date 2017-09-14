@@ -36,7 +36,7 @@
             'loadstart': channel.create('loadstart'),
             'loadstop' : channel.create('loadstop'),
             'loaderror' : channel.create('loaderror'),
-            'industraformevent' : channel.create('industraformevent'),
+            'eventemitted' : channel.create('eventemitted'),
             'exit' : channel.create('exit')
        };
     }

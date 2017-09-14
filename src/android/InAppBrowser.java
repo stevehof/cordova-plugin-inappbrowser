@@ -84,7 +84,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String HIDDEN = "hidden";
     private static final String LOAD_START_EVENT = "loadstart";
     private static final String LOAD_STOP_EVENT = "loadstop";
-    private static final String INDUSTRAFORM_EVENT = "industraformevent";
+    private static final String EMITTED_EVENT = "eventemitted";
     private static final String LOAD_ERROR_EVENT = "loaderror";
     private static final String CLEAR_ALL_CACHE = "clearcache";
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
@@ -821,7 +821,7 @@ public class InAppBrowser extends CordovaPlugin {
                     {
                         try {
                             JSONObject obj = new JSONObject();
-                            obj.put("type", INDUSTRAFORM_EVENT);
+                            obj.put("type", EMITTED_EVENT);
                             obj.put("event_name", event);
                             obj.put("event_data", json_data);
                             sendUpdate(obj, true);
