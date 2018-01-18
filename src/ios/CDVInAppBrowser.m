@@ -310,7 +310,7 @@
 - (void)injectDeferredObject:(NSString*)source withWrapper:(NSString*)jsWrapper
 {
     // Ensure an iframe bridge is created to communicate with the CDVInAppBrowserViewController
-    [self.inAppBrowserViewController.webView stringByEvaluatingJavaScriptFromString:@"(function(d){_cdvIframeBridge=d.getElementById('_cdvIframeBridge');if(!_cdvIframeBridge) {var e = _cdvIframeBridge = d.createElement('iframe');e.id='_cdvIframeBridge'; e.style.display='none';d.body.appendChild(e);}})(document)"];
+    [self.inAppBrowserViewController.webView stringByEvaluatingJavaScriptFromString:@"(function(d){_cdvIframeBridge=d.getElementById('_cdvIframeBridge');if(!_cdvIframeBridge) {var e = _cdvIframeBridge = d.createElement('iframe');e.id='_cdvIframeBridge'; e.style.display='none';d.body.appendChild(e);} if(!('cordovaEvents' in window)){window.cordovaEvents = {Emit: function(eventName, eventData) {var iframe = document.createElement('iframe'); iframe.setAttribute('src', 'emit-event://'+eventName+'/'+eventData ); document.documentElement.appendChild(iframe); iframe.parentNode.removeChild(iframe); iframe = null;}}} })(document); "];
 
     if (jsWrapper != nil) {
         NSData* jsonData = [NSJSONSerialization dataWithJSONObject:@[source] options:0 error:nil];
@@ -433,6 +433,28 @@
             [self.commandDelegate sendPluginResult:pluginResult callbackId:scriptCallbackId];
             return NO;
         }
+    }
+    else if ([[ url scheme] isEqualToString:@"emit-event"] && (self.callbackId != nil)) {
+        NSString* eventName = [url host];
+        NSString* eventData = [url path];
+        CDVPluginResult* pluginResult = nil;
+        
+        NSLog(@"Event emitted - EventName: %@, EventData: %@", eventName, eventData);
+        
+        if ((eventData != nil) && ([eventData length] > 1)) {
+            eventData = [eventData substringFromIndex:1];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                             messageAsDictionary:@{@"type":@"eventemitted", @"event_name":eventName, @"event_data":eventData}];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                         messageAsDictionary:@{@"type":@"eventemitted", @"event_name":eventName, @"event_data":@""}];
+            
+        }
+        
+        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        return NO;
+        
     }
     //if is an app store link, let the system handle it, otherwise it fails to load it
     else if ([[ url scheme] isEqualToString:@"itms-appss"] || [[ url scheme] isEqualToString:@"itms-apps"]) {
