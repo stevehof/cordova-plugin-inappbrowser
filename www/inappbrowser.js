@@ -37,7 +37,8 @@
             'loadstop': channel.create('loadstop'),
             'loaderror': channel.create('loaderror'),
             'eventemitted' : channel.create('eventemitted'),
-            'exit': channel.create('exit')
+            'exit': channel.create('exit'),
+            'customscheme': channel.create('customscheme')
         };
     }
 
