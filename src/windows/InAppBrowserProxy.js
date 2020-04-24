@@ -81,7 +81,7 @@ function attachNavigationEvents (element, callback) {
         // });
         element.webkit={messageHandlers:{cordova_iab: {}}};
         element.webkit.messageHandlers.cordova_iab.postMessage = function (data){
-            callback({type: "message", event_data: data}, { keepCallback: true })
+            callback({type: "message", data: data}, { keepCallback: true })
         };
     } else {
         var onError = function () {
