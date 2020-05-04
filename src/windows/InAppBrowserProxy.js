@@ -77,7 +77,7 @@ function attachNavigationEvents (element, callback) {
             }
         });
         element.addEventListener("MSWebViewScriptNotify", function (e) {
-            callback({type: "message", data: e.value}, { keepCallback: true })
+            callback({type: "message", data: JSON.parse(e.value)}, { keepCallback: true })
         });
     } else {
         var onError = function () {
