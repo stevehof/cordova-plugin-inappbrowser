@@ -76,13 +76,9 @@ function attachNavigationEvents (element, callback) {
                 }
             }
         });
-        // element.addEventListener("MSWebViewScriptNotify", function (e) {
-        //     callback({type: "message", event_data: e.value}, { keepCallback: true })
-        // });
-        element.webkit={messageHandlers:{cordova_iab: {}}};
-        element.webkit.messageHandlers.cordova_iab.postMessage = function (data){
-            callback({type: "message", data: data}, { keepCallback: true })
-        };
+        element.addEventListener("MSWebViewScriptNotify", function (e) {
+            callback({type: "message", data: e.value}, { keepCallback: true })
+        });
     } else {
         var onError = function () {
             callback({ type: 'loaderror', url: this.contentWindow.location }, {keepCallback: true});
