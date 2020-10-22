@@ -25,6 +25,7 @@
     var modulemapper = require('cordova/modulemapper');
     var urlutil = require('cordova/urlutil');
     var _iab;
+    var _closingIab;
 
     function InAppBrowser () {
         this.channels = {
@@ -53,6 +54,7 @@
             exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl]);
         },
         close: function (eventname) {
+            _closingIab = _iab;
             exec(null, null, 'InAppBrowser', 'close', []);
             _iab = null;
         },
@@ -102,16 +104,28 @@
         }
 
         strUrl = urlutil.makeAbsolute(strUrl);
-        if (!_iab)
+        if (!_iab) {
             _iab = new InAppBrowser();
+            _closingIab = null;
+        }
 
         callbacks = callbacks || {};
         for (var callbackName in callbacks) {
             _iab.addEventListener(callbackName, callbacks[callbackName]);
         }
 
-        var cb = function (eventname) {
-            _iab._eventHandler(eventname);
+        var cb = function (evt) {
+            if (_closingIab) {
+                _closingIab._eventHandler(evt);
+                if (evt && evt.type === 'exit') {
+                    console.log('browser received closing event.');
+                    _closingIab = null;
+                }
+            } else if (_iab) {
+                _iab._eventHandler(evt);
+            } else {
+                console.warn('Lost browser event: ' + JSON.stringify(evt));
+            }
         };
 
         strWindowFeatures = strWindowFeatures || '';
