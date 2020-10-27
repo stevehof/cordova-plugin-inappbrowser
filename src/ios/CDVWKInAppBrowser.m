@@ -336,15 +336,7 @@ static CDVWKInAppBrowser* instance = nil;
         return;
     }
     
-    _previousStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
-    
-    // Run later to avoid the "took a long time" log message.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.inAppBrowserViewController != nil) {
-            _previousStatusBarStyle = -1;
-            [self.inAppBrowserViewController.presentingViewController dismissViewControllerAnimated:YES completion:nil];
-        }
-    });
+    _previousStatusBarStyle = -1;
 }
 
 - (void)openInCordovaWebView:(NSURL*)url withOptions:(NSString*)options
@@ -1148,6 +1140,11 @@ BOOL isExiting = FALSE;
 }
 
 #pragma mark WKNavigationDelegate
+
+-(void)webViewWebContentProcessDidTerminate:(WKWebView *)webView {
+    NSLog(@"IndustraForm window has been terminated. Reloading the app.");
+    [webView reload];
+}
 
 - (void)webView:(WKWebView *)theWebView didStartProvisionalNavigation:(WKNavigation *)navigation{
     
