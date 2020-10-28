@@ -690,7 +690,6 @@ static CDVWKInAppBrowser* instance = nil;
 @synthesize currentURL;
 
 CGFloat lastReducedStatusBarHeight = 0.0;
-BOOL isExiting = FALSE;
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings
 {
@@ -1036,15 +1035,6 @@ BOOL isExiting = FALSE;
     [super viewDidLoad];
 }
 
-- (void)viewDidDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
-    if (isExiting && (self.navigationDelegate != nil) && [self.navigationDelegate respondsToSelector:@selector(browserExit)]) {
-        [self.navigationDelegate browserExit];
-        isExiting = FALSE;
-    }
-}
-
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
     return UIStatusBarStyleDefault;
@@ -1058,17 +1048,10 @@ BOOL isExiting = FALSE;
 {
     self.currentURL = nil;
     
-    __weak UIViewController* weakSelf = self;
-    
-    // Run later to avoid the "took a long time" log message.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        isExiting = TRUE;
-        if ([weakSelf respondsToSelector:@selector(presentingViewController)]) {
-            [[weakSelf presentingViewController] dismissViewControllerAnimated:YES completion:nil];
-        } else {
-            [[weakSelf parentViewController] dismissViewControllerAnimated:YES completion:nil];
-        }
-    });
+    if ((self.navigationDelegate != nil) && [self.navigationDelegate respondsToSelector:@selector(browserExit)]) {
+        [self.navigationDelegate browserExit];
+    }
+
 }
 
 - (void)navigateTo:(NSURL*)url
