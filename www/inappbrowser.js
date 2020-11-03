@@ -93,6 +93,10 @@
             } else {
                 throw new Error('insertCSS requires exactly one of code or file to be specified');
             }
+        },
+
+        changeWindowSizeIfHidden: function (height, width, cb) {
+            exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [height, width])
         }
     };
 
