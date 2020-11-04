@@ -336,15 +336,7 @@ static CDVWKInAppBrowser* instance = nil;
         return;
     }
     
-    _previousStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
-    
-    // Run later to avoid the "took a long time" log message.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.inAppBrowserViewController != nil) {
-            _previousStatusBarStyle = -1;
-            [self.inAppBrowserViewController.presentingViewController dismissViewControllerAnimated:YES completion:nil];
-        }
-    });
+    _previousStatusBarStyle = -1;
 }
 
 - (void)openInCordovaWebView:(NSURL*)url withOptions:(NSString*)options
@@ -698,7 +690,6 @@ static CDVWKInAppBrowser* instance = nil;
 @synthesize currentURL;
 
 CGFloat lastReducedStatusBarHeight = 0.0;
-BOOL isExiting = FALSE;
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings
 {
@@ -1044,15 +1035,6 @@ BOOL isExiting = FALSE;
     [super viewDidLoad];
 }
 
-- (void)viewDidDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
-    if (isExiting && (self.navigationDelegate != nil) && [self.navigationDelegate respondsToSelector:@selector(browserExit)]) {
-        [self.navigationDelegate browserExit];
-        isExiting = FALSE;
-    }
-}
-
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
     return UIStatusBarStyleDefault;
@@ -1066,17 +1048,10 @@ BOOL isExiting = FALSE;
 {
     self.currentURL = nil;
     
-    __weak UIViewController* weakSelf = self;
-    
-    // Run later to avoid the "took a long time" log message.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        isExiting = TRUE;
-        if ([weakSelf respondsToSelector:@selector(presentingViewController)]) {
-            [[weakSelf presentingViewController] dismissViewControllerAnimated:YES completion:nil];
-        } else {
-            [[weakSelf parentViewController] dismissViewControllerAnimated:YES completion:nil];
-        }
-    });
+    if ((self.navigationDelegate != nil) && [self.navigationDelegate respondsToSelector:@selector(browserExit)]) {
+        [self.navigationDelegate browserExit];
+    }
+
 }
 
 - (void)navigateTo:(NSURL*)url
@@ -1148,6 +1123,11 @@ BOOL isExiting = FALSE;
 }
 
 #pragma mark WKNavigationDelegate
+
+-(void)webViewWebContentProcessDidTerminate:(WKWebView *)webView {
+    NSLog(@"IndustraForm window has been terminated. Reloading the app.");
+    [webView reload];
+}
 
 - (void)webView:(WKWebView *)theWebView didStartProvisionalNavigation:(WKNavigation *)navigation{
     
