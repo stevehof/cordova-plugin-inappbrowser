@@ -96,7 +96,11 @@
         },
 
         changeWindowSizeIfHidden: function (height, width, cb) {
-            exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [height, width])
+            if (device.platform.toLowerCase() === 'android') {
+                exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [height, width])
+            } else {
+                console.warn('changeWindowSizeIfHidden called but not implemented for ' + device.platform)
+            }
         }
     };
 
