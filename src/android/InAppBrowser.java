@@ -338,6 +338,24 @@ public class InAppBrowser extends CordovaPlugin {
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
             pluginResult.setKeepCallback(true);
             this.callbackContext.sendPluginResult(pluginResult);
+        } else if (action.equals("changeWindowSizeIfHidden")) {
+            final int height = args.getInt(0);
+            final int width = args.getInt(1);
+            this.cordova.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (dialog != null && !cordova.getActivity().isFinishing() && !dialog.isShowing()) {
+                        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+                        lp.copyFrom(dialog.getWindow().getAttributes());
+                        lp.width = width;
+                        lp.height = height;
+                        dialog.getWindow().setAttributes(lp);
+                        callbackContext.success(1);
+                    } else {
+                        callbackContext.success(0);
+                    }
+                }
+            });
         }
         else {
             return false;

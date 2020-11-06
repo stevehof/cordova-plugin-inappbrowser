@@ -93,6 +93,14 @@
             } else {
                 throw new Error('insertCSS requires exactly one of code or file to be specified');
             }
+        },
+
+        changeWindowSizeIfHidden: function (height, width, cb) {
+            if (device.platform.toLowerCase() === 'android') {
+                exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [height, width])
+            } else {
+                console.warn('changeWindowSizeIfHidden called but not implemented for ' + device.platform)
+            }
         }
     };
 
