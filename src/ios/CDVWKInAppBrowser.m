@@ -90,22 +90,13 @@ static CDVWKInAppBrowser* instance = nil;
 -(void)changeWindowSizeIfHidden:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
-    if (self->tmpWindow) { // tmpWindow gets set to nil when the window is hidden
+    if (_previousStatusBarStyle != -1) { // indicates that the window is not currently hidden (see hide method)
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:0];
     } else {
-        CGRect webViewBounds = [self.webView bounds];
-        NSInteger height = (int)[command.arguments objectAtIndex:0];
-        NSInteger width = (int)[command.arguments objectAtIndex:1];
-
-        if (height == -1) {
-            height = self.originalHeight;
-        }
-        if (width == -1) {
-            width = self.originalWidth;
-        }
-        webViewBounds.size.height = height;
-        webViewBounds.size.width = width;
-        [self.webView setFrame:webViewBounds];
+        NSInteger height = [([command.arguments objectAtIndex:0]) integerValue];
+        NSInteger width = [([command.arguments objectAtIndex:1]) integerValue];
+        self.nextHeight = height;
+        self.nextWidth = width;
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:1];
     }
  
@@ -284,8 +275,8 @@ static CDVWKInAppBrowser* instance = nil;
     if (!browserOptions.hidden) {
         [self show:nil withNoAnimate:browserOptions.hidden];
     }
-    self.originalHeight = [self.webView bounds].size.height;
-    self.originalWidth = [self.webView bounds].size.width;
+    self.nextHeight = -1;
+    self.nextWidth = -1;
 }
 
 - (void)show:(CDVInvokedUrlCommand*)command{
@@ -327,6 +318,10 @@ static CDVWKInAppBrowser* instance = nil;
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf->tmpWindow) {
                 CGRect frame = [[UIScreen mainScreen] bounds];
+                if (self.nextHeight != -1)
+                    frame.size.height = self.nextHeight;
+                if (self.nextWidth != -1)
+                    frame.size.width = self.nextWidth;
                 if(initHidden && osVersion < 11){
                    frame.origin.x = -10000;
                 }

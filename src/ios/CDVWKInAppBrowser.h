@@ -39,8 +39,8 @@
 @property (nonatomic, copy) NSString* callbackId;
 @property (nonatomic, copy) NSRegularExpression *callbackIdPattern;
 
-@property NSInteger originalHeight;
-@property NSInteger originalWidth;
+@property NSInteger nextHeight;
+@property NSInteger nextWidth;
 
 + (id) getInstance;
 - (void)open:(CDVInvokedUrlCommand*)command;
