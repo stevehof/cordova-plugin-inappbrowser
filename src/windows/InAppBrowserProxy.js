@@ -127,6 +127,17 @@ var IAB = {
             browserWrap.style.display = 'none';
         }
     },
+    changeWindowSizeIfHidden: function (win, fail, args) {
+        if (!(browserWrap && browserWrap.style.display === 'none')) {
+            win(0)
+        } else {
+            var height = args[0] === -1 ? '100%' : args[0] + 'px'
+            var width = args[1] === -1 ? '100%' : args[1] + 'px'
+            browserWrap.style.height = height;
+            browserWrap.style.width = width;
+            win(1)
+        }
+    },
     open: function (win, lose, args) {
         // make function async so that we can add navigation events handlers before view is loaded and navigation occured
         setImmediate(function () {
