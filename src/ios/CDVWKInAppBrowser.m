@@ -87,24 +87,40 @@ static CDVWKInAppBrowser* instance = nil;
     return NO;
 }
 
+-(void)changeWindowSizeIfHidden:(CDVInvokedUrlCommand*)command
+{
+    CDVPluginResult* pluginResult = nil;
+    if (_previousStatusBarStyle != -1) { // indicates that the window is not currently hidden (see hide method)
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:0];
+    } else {
+        NSInteger height = [([command.arguments objectAtIndex:0]) integerValue];
+        NSInteger width = [([command.arguments objectAtIndex:1]) integerValue];
+        self.nextHeight = height;
+        self.nextWidth = width;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:1];
+    }
+ 
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)open:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult;
-    
+
     NSString* url = [command argumentAtIndex:0];
     NSString* target = [command argumentAtIndex:1 withDefault:kInAppBrowserTargetSelf];
     NSString* options = [command argumentAtIndex:2 withDefault:@"" andClass:[NSString class]];
-    
+
     self.callbackId = command.callbackId;
-    
+
     if (url != nil) {
         NSURL* baseUrl = [self.webViewEngine URL];
         NSURL* absoluteUrl = [[NSURL URLWithString:url relativeToURL:baseUrl] absoluteURL];
-        
+
         if ([self isSystemUrl:absoluteUrl]) {
             target = kInAppBrowserTargetSystem;
         }
-        
+
         if ([target isEqualToString:kInAppBrowserTargetSelf]) {
             [self openInCordovaWebView:absoluteUrl withOptions:options];
         } else if ([target isEqualToString:kInAppBrowserTargetSystem]) {
@@ -112,12 +128,12 @@ static CDVWKInAppBrowser* instance = nil;
         } else { // _blank or anything else
             [self openInInAppBrowser:absoluteUrl withOptions:options];
         }
-        
+
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     } else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"incorrect number of arguments"];
     }
-    
+
     [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -125,17 +141,17 @@ static CDVWKInAppBrowser* instance = nil;
 - (void)openInInAppBrowser:(NSURL*)url withOptions:(NSString*)options
 {
     CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
-    
+
     WKWebsiteDataStore* dataStore = [WKWebsiteDataStore defaultDataStore];
     if (browserOptions.cleardata) {
-        
+
         NSDate* dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
         [dataStore removeDataOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] modifiedSince:dateFrom completionHandler:^{
             NSLog(@"Removed all WKWebView data");
             self.inAppBrowserViewController.webView.configuration.processPool = [[WKProcessPool alloc] init]; // create new process pool to flush all data
         }];
     }
-    
+
     if (browserOptions.clearcache) {
         bool isAtLeastiOS11 = false;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
@@ -143,7 +159,7 @@ static CDVWKInAppBrowser* instance = nil;
             isAtLeastiOS11 = true;
         }
 #endif
-            
+
         if(isAtLeastiOS11){
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
             // Deletes all cookies
@@ -171,7 +187,7 @@ static CDVWKInAppBrowser* instance = nil;
              }];
         }
     }
-    
+
     if (browserOptions.clearsessioncache) {
         bool isAtLeastiOS11 = false;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
@@ -200,12 +216,12 @@ static CDVWKInAppBrowser* instance = nil;
     if (self.inAppBrowserViewController == nil) {
         self.inAppBrowserViewController = [[CDVWKInAppBrowserViewController alloc] initWithBrowserOptions: browserOptions andSettings:self.commandDelegate.settings];
         self.inAppBrowserViewController.navigationDelegate = self;
-        
+
         if ([self.viewController conformsToProtocol:@protocol(CDVScreenOrientationDelegate)]) {
             self.inAppBrowserViewController.orientationDelegate = (UIViewController <CDVScreenOrientationDelegate>*)self.viewController;
         }
     }
-    
+
     [self.inAppBrowserViewController showLocationBar:browserOptions.location];
     [self.inAppBrowserViewController showToolBar:browserOptions.toolbar :browserOptions.toolbarposition];
     if (browserOptions.closebuttoncaption != nil || browserOptions.closebuttoncolor != nil) {
@@ -222,7 +238,7 @@ static CDVWKInAppBrowser* instance = nil;
         }
     }
     self.inAppBrowserViewController.modalPresentationStyle = presentationStyle;
-    
+
     // Set Transition Style
     UIModalTransitionStyle transitionStyle = UIModalTransitionStyleCoverVertical; // default
     if (browserOptions.transitionstyle != nil) {
@@ -233,7 +249,7 @@ static CDVWKInAppBrowser* instance = nil;
         }
     }
     self.inAppBrowserViewController.modalTransitionStyle = transitionStyle;
-    
+
     //prevent webView from bouncing
     if (browserOptions.disallowoverscroll) {
         if ([self.inAppBrowserViewController.webView respondsToSelector:@selector(scrollView)]) {
@@ -246,7 +262,7 @@ static CDVWKInAppBrowser* instance = nil;
             }
         }
     }
-    
+
     // use of beforeload event
     if([browserOptions.beforeload isKindOfClass:[NSString class]]){
         _beforeload = browserOptions.beforeload;
@@ -254,11 +270,13 @@ static CDVWKInAppBrowser* instance = nil;
         _beforeload = @"yes";
     }
     _waitForBeforeload = ![_beforeload isEqualToString:@""];
-    
+
     [self.inAppBrowserViewController navigateTo:url];
     if (!browserOptions.hidden) {
         [self show:nil withNoAnimate:browserOptions.hidden];
     }
+    self.nextHeight = -1;
+    self.nextWidth = -1;
 }
 
 - (void)show:(CDVInvokedUrlCommand*)command{
@@ -300,6 +318,10 @@ static CDVWKInAppBrowser* instance = nil;
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf->tmpWindow) {
                 CGRect frame = [[UIScreen mainScreen] bounds];
+                if (self.nextHeight != -1)
+                    frame.size.height = self.nextHeight;
+                if (self.nextWidth != -1)
+                    frame.size.width = self.nextWidth;
                 if(initHidden && osVersion < 11){
                    frame.origin.x = -10000;
                 }
