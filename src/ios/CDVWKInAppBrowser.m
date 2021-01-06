@@ -1112,6 +1112,13 @@ static CDVWKInAppBrowser* instance = nil;
 }
 
 - (void) rePositionViews {
+    if (self.navigationDelegate.inSmallWindowMode) {
+        // we don't need to account for the toolbar height etc when the window isn't visible;
+        // furthermore lastReducedStatusBarHeight would get set prematurely and the window won't resize properly
+        // when maximised
+        return;
+    }
+
     CGRect viewBounds = [self.webView bounds];
     CGFloat statusBarHeight = [self getStatusBarOffset];
     
