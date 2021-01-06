@@ -40,6 +40,8 @@
 
 #pragma mark CDVWKInAppBrowser
 
+CGFloat lastReducedStatusBarHeight = 0.0;
+
 @interface CDVWKInAppBrowser () {
     NSInteger _previousStatusBarStyle;
 }
@@ -701,6 +703,7 @@ static CDVWKInAppBrowser* instance = nil;
     }
     
     _previousStatusBarStyle = -1; // this value was reset before reapplying it. caused statusbar to stay black on ios7
+    lastReducedStatusBarHeight = 0.0;
 }
 
 @end //CDVWKInAppBrowser
@@ -711,7 +714,7 @@ static CDVWKInAppBrowser* instance = nil;
 
 @synthesize currentURL;
 
-CGFloat lastReducedStatusBarHeight = 0.0;
+
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings
 {
