@@ -89,16 +89,13 @@ static CDVWKInAppBrowser* instance = nil;
     return NO;
 }
 
--(void)changeWindowSizeIfHidden:(CDVInvokedUrlCommand*)command
+-(void)setSmallWindowModeIfHidden:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
     if (_previousStatusBarStyle != -1) { // indicates that the window is not currently hidden (see hide method)
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:0];
     } else {
-        NSInteger height = [([command.arguments objectAtIndex:0]) integerValue];
-        NSInteger width = [([command.arguments objectAtIndex:1]) integerValue];
-        self.nextHeight = height;
-        self.nextWidth = width;
+        self.inSmallWindowMode = [([command.arguments objectAtIndex:0]) boolValue];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:1];
     }
  
@@ -277,8 +274,7 @@ static CDVWKInAppBrowser* instance = nil;
     if (!browserOptions.hidden) {
         [self show:nil withNoAnimate:browserOptions.hidden];
     }
-    self.nextHeight = -1;
-    self.nextWidth = -1;
+    self.inSmallWindowMode = NO;
 }
 
 - (void)show:(CDVInvokedUrlCommand*)command{
@@ -320,10 +316,10 @@ static CDVWKInAppBrowser* instance = nil;
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf->tmpWindow) {
                 CGRect frame = [[UIScreen mainScreen] bounds];
-                if (self.nextHeight != -1)
-                    frame.size.height = self.nextHeight;
-                if (self.nextWidth != -1)
-                    frame.size.width = self.nextWidth;
+                if (self.inSmallWindowMode) {
+                    frame.size.height = 1;
+                    frame.size.width = 1;
+                }
                 if(initHidden && osVersion < 11){
                    frame.origin.x = -10000;
                 }
