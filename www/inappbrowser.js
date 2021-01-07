@@ -95,8 +95,13 @@
             }
         },
 
-        changeWindowSizeIfHidden: function (height, width, cb) {
-            exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [height, width])
+        setSmallWindowModeIfHidden: function (minimiseWindow, cb) {
+            if (device.platform === 'iOS') {
+                exec(cb, null, 'InAppBrowser', 'setSmallWindowModeIfHidden', [minimiseWindow]);
+            } else {
+                var size = minimiseWindow ? 1 : -1;
+                exec(cb, null, 'InAppBrowser', 'changeWindowSizeIfHidden', [size, size])
+            }
         }
     };
 

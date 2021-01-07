@@ -40,6 +40,8 @@
 
 #pragma mark CDVWKInAppBrowser
 
+CGFloat lastReducedStatusBarHeight = 0.0;
+
 @interface CDVWKInAppBrowser () {
     NSInteger _previousStatusBarStyle;
 }
@@ -87,16 +89,13 @@ static CDVWKInAppBrowser* instance = nil;
     return NO;
 }
 
--(void)changeWindowSizeIfHidden:(CDVInvokedUrlCommand*)command
+-(void)setSmallWindowModeIfHidden:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
     if (_previousStatusBarStyle != -1) { // indicates that the window is not currently hidden (see hide method)
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:0];
     } else {
-        NSInteger height = [([command.arguments objectAtIndex:0]) integerValue];
-        NSInteger width = [([command.arguments objectAtIndex:1]) integerValue];
-        self.nextHeight = height;
-        self.nextWidth = width;
+        self.inSmallWindowMode = [([command.arguments objectAtIndex:0]) boolValue];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:1];
     }
  
@@ -275,8 +274,7 @@ static CDVWKInAppBrowser* instance = nil;
     if (!browserOptions.hidden) {
         [self show:nil withNoAnimate:browserOptions.hidden];
     }
-    self.nextHeight = -1;
-    self.nextWidth = -1;
+    self.inSmallWindowMode = NO;
 }
 
 - (void)show:(CDVInvokedUrlCommand*)command{
@@ -310,7 +308,7 @@ static CDVWKInAppBrowser* instance = nil;
     nav.modalPresentationStyle = self.inAppBrowserViewController.modalPresentationStyle;
     
     __weak CDVWKInAppBrowser* weakSelf = self;
-    
+    __block BOOL blockNoAnimate = noAnimate;
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
@@ -318,10 +316,11 @@ static CDVWKInAppBrowser* instance = nil;
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf->tmpWindow) {
                 CGRect frame = [[UIScreen mainScreen] bounds];
-                if (self.nextHeight != -1)
-                    frame.size.height = self.nextHeight;
-                if (self.nextWidth != -1)
-                    frame.size.width = self.nextWidth;
+                if (self.inSmallWindowMode) {
+                    // don't change the height because it doesn't get recalculated correctly when maximised
+                    frame.size.width = 1;
+                    blockNoAnimate = YES;  // there will be a 1 px line on the left of the screen so this makes it less noticeable
+                }
                 if(initHidden && osVersion < 11){
                    frame.origin.x = -10000;
                 }
@@ -335,7 +334,7 @@ static CDVWKInAppBrowser* instance = nil;
             if(!initHidden || osVersion < 11){
                 [self->tmpWindow makeKeyAndVisible];
             }
-            [tmpController presentViewController:nav animated:!noAnimate completion:nil];
+            [tmpController presentViewController:nav animated:!blockNoAnimate completion:nil];
         }
     });
 }
@@ -701,6 +700,7 @@ static CDVWKInAppBrowser* instance = nil;
     }
     
     _previousStatusBarStyle = -1; // this value was reset before reapplying it. caused statusbar to stay black on ios7
+    lastReducedStatusBarHeight = 0.0;
 }
 
 @end //CDVWKInAppBrowser
@@ -711,7 +711,7 @@ static CDVWKInAppBrowser* instance = nil;
 
 @synthesize currentURL;
 
-CGFloat lastReducedStatusBarHeight = 0.0;
+
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings
 {
