@@ -308,7 +308,7 @@ static CDVWKInAppBrowser* instance = nil;
     nav.modalPresentationStyle = self.inAppBrowserViewController.modalPresentationStyle;
     
     __weak CDVWKInAppBrowser* weakSelf = self;
-    
+    __block BOOL blockNoAnimate = noAnimate;
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
@@ -317,8 +317,9 @@ static CDVWKInAppBrowser* instance = nil;
             if (!strongSelf->tmpWindow) {
                 CGRect frame = [[UIScreen mainScreen] bounds];
                 if (self.inSmallWindowMode) {
-                    frame.size.height = 1;
+                    // don't change the height because it doesn't get recalculated correctly when maximised
                     frame.size.width = 1;
+                    blockNoAnimate = YES;  // there will be a 1 px line on the left of the screen so this makes it less noticeable
                 }
                 if(initHidden && osVersion < 11){
                    frame.origin.x = -10000;
@@ -333,7 +334,7 @@ static CDVWKInAppBrowser* instance = nil;
             if(!initHidden || osVersion < 11){
                 [self->tmpWindow makeKeyAndVisible];
             }
-            [tmpController presentViewController:nav animated:!noAnimate completion:nil];
+            [tmpController presentViewController:nav animated:!blockNoAnimate completion:nil];
         }
     });
 }
@@ -1112,13 +1113,6 @@ static CDVWKInAppBrowser* instance = nil;
 }
 
 - (void) rePositionViews {
-    if (self.navigationDelegate.inSmallWindowMode) {
-        // we don't need to account for the toolbar height etc when the window isn't visible;
-        // furthermore lastReducedStatusBarHeight would get set prematurely and the window won't resize properly
-        // when maximised
-        return;
-    }
-
     CGRect viewBounds = [self.webView bounds];
     CGFloat statusBarHeight = [self getStatusBarOffset];
     
