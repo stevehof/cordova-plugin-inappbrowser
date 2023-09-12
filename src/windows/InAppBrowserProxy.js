@@ -188,7 +188,7 @@ var IAB = {
                     browserWrap.style.display = 'none';
                 }
 
-                popup = document.createElement(isWebViewAvailable ? 'x-ms-webview' : 'iframe');
+                popup = document.createElement(isWebViewAvailable ? 'webview' : 'iframe', );
                 if (popup instanceof HTMLIFrameElement) { // eslint-disable-line no-undef
                     // For iframe we need to override bacground color of parent element here
                     // otherwise pages without background color set will have transparent background
@@ -197,6 +197,7 @@ var IAB = {
                 popup.style.borderWidth = '0px';
                 popup.style.width = '100%';
                 popup.style.marginBottom = '-5px';
+                popup.setAttribute("x:Name":"webview1"))
 
                 browserWrap.appendChild(popup);
 
@@ -292,6 +293,7 @@ var IAB = {
                     strUrl = strUrl.replace('ms-appx://', 'ms-appx-web://');
                 }
                 popup.src = strUrl;
+                popup.setAttribute('Source', strUrl);
             }
         });
     },
